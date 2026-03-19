@@ -1,10 +1,33 @@
-import React from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+import Home from "./pages/Home";
+import BusinessDetail from "./pages/BusinessDetail";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+
+import Header from "./components/Header";
+import Footer from "./components/Footer";
 
 function App() {
+
   return (
-    <div>
-      <h1>Welcome to my website</h1>
-    </div>
+    <BrowserRouter>
+
+      <Header />
+
+      <Routes>
+
+        <Route path="/" element={<Home />} />
+        <Route path="/business/:id" element={<BusinessDetail />} />
+
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+
+      </Routes>
+
+      <Footer />
+
+    </BrowserRouter>
   );
 }
 
