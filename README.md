@@ -104,6 +104,4 @@ npm run dev
 
 Contributions are welcome. If you would like to improve the project, fix bugs, or add new features, feel free to fork the repository and submit a pull request.
 
-Please ensure that your code follows the existing project structure and coding standards.
-
 ---
