@@ -41,6 +41,15 @@ body{
   transition:0.2s;
 }
 
+.home-btn{
+  background:transparent;
+  border:1px solid #d1d5db;
+  color:#444;
+}
+
+.home-btn:hover{
+  background:#f1f1f1;
+}
 /* LOGIN */
 
 .login-btn{
@@ -173,17 +182,31 @@ body{
 /* REVIEWS */
 
 .reviews{
-  display:flex;
-  gap:20px;
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(220px,1fr));
+  gap:25px;
+  margin-top:25px;
 }
 
 .review{
   background:white;
-  padding:14px 20px;
-  border-radius:6px;
-  border:1px solid #eee;
+  padding:18px;
+  border-radius:10px;
+  border:1px solid #e5e7eb;
+  box-shadow:0 4px 12px rgba(0,0,0,0.05);
+  transition:0.25s ease;
 }
 
+.review:hover{
+  transform:translateY(-4px);
+  box-shadow:0 8px 18px rgba(0,0,0,0.1);
+}
+
+.stars{
+  color:#fbbf24;
+  font-size:18px;
+  margin-bottom:8px;
+}
 /* FOOTER */
 
 .footer{

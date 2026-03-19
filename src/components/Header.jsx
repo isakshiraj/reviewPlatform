@@ -12,8 +12,10 @@ function Header(){
 
       <nav className="nav-links">
 
-  
-
+        <Link to="/">
+          <button className="home-btn">Home</button>
+        </Link>
+       
         <Link to="/login">
           <button className="login-btn">Login</button>
         </Link>
