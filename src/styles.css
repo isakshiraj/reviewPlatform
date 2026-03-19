@@ -1,4 +1,4 @@
-/* GLOBAL */
+
 
 *{
   margin:0;
@@ -12,7 +12,7 @@ body{
   color:#333;
 }
 
-/* NAVBAR */
+
 
 .navbar{
   display:flex;
@@ -30,7 +30,7 @@ body{
   color:black;
 }
 
-/* NAV BUTTONS */
+
 
 .nav-links button{
   margin-left:12px;
@@ -50,7 +50,7 @@ body{
 .home-btn:hover{
   background:#f1f1f1;
 }
-/* LOGIN */
+
 
 .login-btn{
   background:transparent;
@@ -62,7 +62,7 @@ body{
   background:#f1f1f1;
 }
 
-/* SIGNUP */
+
 
 .signup-btn{
   background:transparent;
@@ -75,7 +75,7 @@ body{
 }
 
 
-/* HERO SECTION */
+
 
 .hero{
   display:flex;
@@ -104,7 +104,7 @@ body{
   height: 250px;
 }
 
-/* SEARCH SECTION */
+
 
 .search-section{
   padding:60px 20px;
@@ -137,7 +137,7 @@ body{
   border-color:#4f46e5;
 }
 
-/* SECTION */
+
 
 .section{
   padding:50px 70px;
@@ -148,7 +148,6 @@ body{
   font-size:26px;
 }
 
-/* BUSINESS CARDS */
 
 .card-container{
   display:grid;
@@ -179,7 +178,7 @@ body{
   color:#555;
 }
 
-/* REVIEWS */
+
 
 .reviews{
   display:grid;
@@ -207,7 +206,7 @@ body{
   font-size:18px;
   margin-bottom:8px;
 }
-/* FOOTER */
+
 
 .footer{
    background:white;
@@ -217,9 +216,6 @@ body{
   margin-top:50px;
 }
 
-
-/***Login, Signup styling****/
-/* AUTH PAGES */
 
 .auth-container{
   display:flex;
