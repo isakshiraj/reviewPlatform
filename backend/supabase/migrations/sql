@@ -1,0 +1,316 @@
+/*
+  # Crowdsourced Review Platform Database Schema
+
+  ## Overview
+  This migration creates the core database schema for a review platform where users can 
+  review and rate local businesses. Admins can approve/reject reviews before publication.
+
+  ## New Tables
+  
+  ### 1. `users`
+  User profiles and authentication data
+  - `id` (uuid, primary key) - Unique user identifier
+  - `email` (text, unique) - User email for authentication
+  - `password_hash` (text) - Hashed password
+  - `name` (text) - User's display name
+  - `role` (text) - User role: 'user' or 'admin'
+  - `avatar_url` (text, nullable) - Profile picture URL
+  - `created_at` (timestamptz) - Account creation timestamp
+  - `updated_at` (timestamptz) - Last update timestamp
+
+  ### 2. `businesses`
+  Local business information
+  - `id` (uuid, primary key) - Unique business identifier
+  - `name` (text) - Business name
+  - `category` (text) - Business category (restaurant, shop, service, etc.)
+  - `description` (text) - Business description
+  - `address` (text) - Physical address
+  - `city` (text) - City location
+  - `state` (text) - State location
+  - `zip_code` (text) - ZIP/postal code
+  - `phone` (text, nullable) - Contact phone
+  - `website` (text, nullable) - Business website
+  - `image_url` (text, nullable) - Business cover image
+  - `average_rating` (numeric) - Aggregated rating (0-5)
+  - `total_reviews` (integer) - Count of approved reviews
+  - `created_at` (timestamptz) - Creation timestamp
+  - `updated_at` (timestamptz) - Last update timestamp
+
+  ### 3. `reviews`
+  User reviews and ratings
+  - `id` (uuid, primary key) - Unique review identifier
+  - `business_id` (uuid, foreign key) - Reference to business
+  - `user_id` (uuid, foreign key) - Reference to user
+  - `title` (text) - Review title
+  - `content` (text) - Review text content
+  - `quality_rating` (integer) - Quality rating (1-5)
+  - `service_rating` (integer) - Service rating (1-5)
+  - `value_rating` (integer) - Value rating (1-5)
+  - `overall_rating` (numeric) - Average of all ratings
+  - `photos` (jsonb) - Array of photo URLs
+  - `status` (text) - Review status: 'pending', 'approved', 'rejected'
+  - `reviewed_by` (uuid, nullable) - Admin who reviewed
+  - `reviewed_at` (timestamptz, nullable) - Review decision timestamp
+  - `created_at` (timestamptz) - Submission timestamp
+  - `updated_at` (timestamptz) - Last update timestamp
+
+  ## Security
+  
+  ### Row Level Security (RLS)
+  All tables have RLS enabled with restrictive policies:
+  
+  #### Users Table
+  - Users can read their own profile
+  - Users can update their own profile (except role)
+  - Admins can read all profiles
+  
+  #### Businesses Table
+  - Anyone can read businesses (public data)
+  - Admins can create, update, delete businesses
+  
+  #### Reviews Table
+  - Users can read approved reviews
+  - Users can read their own reviews (any status)
+  - Users can create reviews
+  - Users can update their own pending reviews
+  - Admins can read all reviews
+  - Admins can update review status (approve/reject)
+  - Users can delete their own reviews
+
+  ## Indexes
+  - Business search by category and location
+  - Reviews by business and status
+  - User lookups by email
+
+  ## Important Notes
+  1. Review status defaults to 'pending' - requires admin approval
+  2. Business ratings are denormalized for performance
+  3. Photos stored as JSONB array of URLs
+  4. All ratings are on 1-5 scale
+*/
+
+-- Create users table
+CREATE TABLE IF NOT EXISTS users (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  email text UNIQUE NOT NULL,
+  password_hash text NOT NULL,
+  name text NOT NULL,
+  role text NOT NULL DEFAULT 'user',
+  avatar_url text,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  CONSTRAINT valid_role CHECK (role IN ('user', 'admin'))
+);
+
+-- Create businesses table
+CREATE TABLE IF NOT EXISTS businesses (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  category text NOT NULL,
+  description text NOT NULL,
+  address text NOT NULL,
+  city text NOT NULL,
+  state text NOT NULL,
+  zip_code text NOT NULL,
+  phone text,
+  website text,
+  image_url text,
+  average_rating numeric DEFAULT 0,
+  total_reviews integer DEFAULT 0,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  CONSTRAINT valid_rating CHECK (average_rating >= 0 AND average_rating <= 5)
+);
+
+-- Create reviews table
+CREATE TABLE IF NOT EXISTS reviews (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id uuid NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  title text NOT NULL,
+  content text NOT NULL,
+  quality_rating integer NOT NULL,
+  service_rating integer NOT NULL,
+  value_rating integer NOT NULL,
+  overall_rating numeric NOT NULL,
+  photos jsonb DEFAULT '[]'::jsonb,
+  status text NOT NULL DEFAULT 'pending',
+  reviewed_by uuid REFERENCES users(id),
+  reviewed_at timestamptz,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  CONSTRAINT valid_quality_rating CHECK (quality_rating >= 1 AND quality_rating <= 5),
+  CONSTRAINT valid_service_rating CHECK (service_rating >= 1 AND service_rating <= 5),
+  CONSTRAINT valid_value_rating CHECK (value_rating >= 1 AND value_rating <= 5),
+  CONSTRAINT valid_overall_rating CHECK (overall_rating >= 1 AND overall_rating <= 5),
+  CONSTRAINT valid_status CHECK (status IN ('pending', 'approved', 'rejected'))
+);
+
+-- Create indexes for performance
+CREATE INDEX IF NOT EXISTS idx_businesses_category ON businesses(category);
+CREATE INDEX IF NOT EXISTS idx_businesses_city ON businesses(city);
+CREATE INDEX IF NOT EXISTS idx_businesses_state ON businesses(state);
+CREATE INDEX IF NOT EXISTS idx_reviews_business_id ON reviews(business_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_user_id ON reviews(user_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_status ON reviews(status);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+
+-- Enable Row Level Security
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE businesses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
+
+-- Users table policies
+CREATE POLICY "Users can read own profile"
+  ON users FOR SELECT
+  TO authenticated
+  USING (auth.uid() = id);
+
+CREATE POLICY "Users can update own profile"
+  ON users FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id AND role = (SELECT role FROM users WHERE id = auth.uid()));
+
+CREATE POLICY "Admins can read all profiles"
+  ON users FOR SELECT
+  TO authenticated
+  USING ((SELECT role FROM users WHERE id = auth.uid()) = 'admin');
+
+-- Businesses table policies
+CREATE POLICY "Anyone can read businesses"
+  ON businesses FOR SELECT
+  TO authenticated
+  USING (true);
+
+CREATE POLICY "Admins can insert businesses"
+  ON businesses FOR INSERT
+  TO authenticated
+  WITH CHECK ((SELECT role FROM users WHERE id = auth.uid()) = 'admin');
+
+CREATE POLICY "Admins can update businesses"
+  ON businesses FOR UPDATE
+  TO authenticated
+  USING ((SELECT role FROM users WHERE id = auth.uid()) = 'admin')
+  WITH CHECK ((SELECT role FROM users WHERE id = auth.uid()) = 'admin');
+
+CREATE POLICY "Admins can delete businesses"
+  ON businesses FOR DELETE
+  TO authenticated
+  USING ((SELECT role FROM users WHERE id = auth.uid()) = 'admin');
+
+-- Reviews table policies
+CREATE POLICY "Users can read approved reviews"
+  ON reviews FOR SELECT
+  TO authenticated
+  USING (status = 'approved');
+
+CREATE POLICY "Users can read own reviews"
+  ON reviews FOR SELECT
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can create reviews"
+  ON reviews FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own pending reviews"
+  ON reviews FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = user_id AND status = 'pending')
+  WITH CHECK (auth.uid() = user_id AND status = 'pending');
+
+CREATE POLICY "Users can delete own reviews"
+  ON reviews FOR DELETE
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Admins can read all reviews"
+  ON reviews FOR SELECT
+  TO authenticated
+  USING ((SELECT role FROM users WHERE id = auth.uid()) = 'admin');
+
+CREATE POLICY "Admins can update review status"
+  ON reviews FOR UPDATE
+  TO authenticated
+  USING ((SELECT role FROM users WHERE id = auth.uid()) = 'admin')
+  WITH CHECK ((SELECT role FROM users WHERE id = auth.uid()) = 'admin');
+
+-- Function to update business ratings
+CREATE OR REPLACE FUNCTION update_business_rating()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN
+    IF NEW.status = 'approved' THEN
+      UPDATE businesses
+      SET 
+        average_rating = (
+          SELECT COALESCE(AVG(overall_rating), 0)
+          FROM reviews
+          WHERE business_id = NEW.business_id AND status = 'approved'
+        ),
+        total_reviews = (
+          SELECT COUNT(*)
+          FROM reviews
+          WHERE business_id = NEW.business_id AND status = 'approved'
+        ),
+        updated_at = now()
+      WHERE id = NEW.business_id;
+    END IF;
+  ELSIF TG_OP = 'DELETE' THEN
+    IF OLD.status = 'approved' THEN
+      UPDATE businesses
+      SET 
+        average_rating = (
+          SELECT COALESCE(AVG(overall_rating), 0)
+          FROM reviews
+          WHERE business_id = OLD.business_id AND status = 'approved'
+        ),
+        total_reviews = (
+          SELECT COUNT(*)
+          FROM reviews
+          WHERE business_id = OLD.business_id AND status = 'approved'
+        ),
+        updated_at = now()
+      WHERE id = OLD.business_id;
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger to automatically update business ratings
+DROP TRIGGER IF EXISTS trigger_update_business_rating ON reviews;
+CREATE TRIGGER trigger_update_business_rating
+  AFTER INSERT OR UPDATE OR DELETE ON reviews
+  FOR EACH ROW
+  EXECUTE FUNCTION update_business_rating();
+
+-- Function to update timestamps
+CREATE OR REPLACE FUNCTION update_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Triggers for updated_at columns
+DROP TRIGGER IF EXISTS trigger_users_updated_at ON users;
+CREATE TRIGGER trigger_users_updated_at
+  BEFORE UPDATE ON users
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at();
+
+DROP TRIGGER IF EXISTS trigger_businesses_updated_at ON businesses;
+CREATE TRIGGER trigger_businesses_updated_at
+  BEFORE UPDATE ON businesses
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at();
+
+DROP TRIGGER IF EXISTS trigger_reviews_updated_at ON reviews;
+CREATE TRIGGER trigger_reviews_updated_at
+  BEFORE UPDATE ON reviews
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at();
