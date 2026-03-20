@@ -1,86 +1,24 @@
 {
-<<<<<<< HEAD
   "name": "backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "Backend API for ReviewHub",
   "main": "server.js",
- "scripts": {
-  "start": "node server.js",
-  "dev": "nodemon server.js"
-},
-  "keywords": [],
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
     "@supabase/supabase-js": "^2.99.3",
-=======
-  "name": "reviewplatform",
-  "version": "0.1.0",
-  "private": true,
-  "dependencies": {
-    "@testing-library/dom": "^10.4.1",
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.1",
-    "@testing-library/user-event": "^13.5.0",
->>>>>>> a2852a8f235efe233e11fea74af5efb1fc2fe6d2
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
-    "jsonwebtoken": "^9.0.3",
-<<<<<<< HEAD
+    "jsonwebtoken": "^9.0.3"
+  },
+  "devDependencies": {
     "nodemon": "^3.1.14"
   }
-=======
-    "mongoose": "^9.3.1",
-    "react": "^19.2.3",
-    "react-dom": "^19.2.3",
-    "react-router-dom": "^7.13.1",
-    "react-scripts": "5.0.1",
-    "web-vitals": "^2.1.4"
-  },
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  },
-  "description": "ReviewHub is a review platform where users can explore local businesses and share their experiences through ratings and reviews. The project allows users to search, filter, and view businesses, as well as read and submit reviews. Admin users can approve or reject \r reviews before they are published.",
-  "main": "index.js",
-  "devDependencies": {
-    "jest": "^27.5.1",
-    "nodemon": "^3.1.14"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/isakshiraj/reviewPlatform.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/isakshiraj/reviewPlatform/issues"
-  },
-  "homepage": "https://github.com/isakshiraj/reviewPlatform#readme"
->>>>>>> a2852a8f235efe233e11fea74af5efb1fc2fe6d2
 }
